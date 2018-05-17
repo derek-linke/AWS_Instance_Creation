@@ -5,4 +5,4 @@
   gather_facts: false
 
   roles:
-    - aws_jmeter_server_creation
+    - aws_instance_creation

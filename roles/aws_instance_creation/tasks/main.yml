@@ -91,7 +91,7 @@
           - proto: all
             cidr_ip: 0.0.0.0/0          
         tags:
-          Sec: "JMeter_Sec_Grp"
+          Sec: "PrivSack_Sec_Grp"
 
     - name: Setup security/firewall settings::default
       ec2_group:        
@@ -108,9 +108,9 @@
           - proto: all
             cidr_ip: 0.0.0.0/0
         tags:
-          Sec: "JMeter_Sec_Grp"
+          Sec: "PrivStack_Sec_Grp"
 
-    - name: Create AWS Master VPC
+    - name: Create AWS LB Servers
       ec2:
         vpc_subnet_id: "{{ public_subnet_id }}"
         private_ip: "{{ item }}"
@@ -121,8 +121,8 @@
         key_name: J_KEY
         group: JMeter_Security_Grp,JMeter_default_Grp
         instance_tags:
-          Name: "{{ master_tag }}"
-          Perf: "{{ master_tag }}"
+          Name: "{{ LB_tag }}"
+          Server: "{{ LB_tag }}"
         state: present
         wait: yes
       with_items: '{{ jm_private_ips }}'
@@ -141,7 +141,7 @@
       wait_for: host={{ item.instances.0.public_dns_name }} port=22 delay=60 timeout=320 state=started
       with_items: '{{ ec2_out.results }}'
 
-    - name: Create AWS Slave VPC
+    - name: Create AWS APP Servers
       ec2:
         vpc_subnet_id: "{{ public_subnet_id }}"
         private_ip: "{{ item }}"
@@ -152,8 +152,8 @@
         key_name: J_KEY
         group: JMeter_Security_Grp,JMeter_default_Grp
         instance_tags:
-          Name: "{{ slave_tag }}"
-          Perf: "{{ slave_tag }}"
+          Name: "{{ APP_tag }}"
+          Server: "{{ APP_tag }}"
         state: present
         wait: yes
       with_items: '{{ js_private_ips }}'
@@ -163,4 +163,25 @@
       wait_for: host={{ item.instances.0.public_dns_name }} port=22 delay=60 timeout=320 state=started
       with_items: '{{ ec2_out.results }}'
 
+    - name: Create AWS DB Servers
+      ec2:
+        vpc_subnet_id: "{{ public_subnet_id }}"
+        private_ip: "{{ item }}"
+        region: "{{ aws_region }}"
+        instance_type: "{{ db_instance_type }}"
+        image: "{{ db_image }}"
+        assign_public_ip: yes
+        key_name: J_KEY
+        group: JMeter_Security_Grp,JMeter_default_Grp
+        instance_tags:
+          Name: "{{ DB_tag }}"
+          Server: "{{ DB_tag }}"
+        state: present
+        wait: yes
+      with_items: '{{ db_private_ips }}'
+      register: ec2_out
+
+    - name: Wait for SSH to come up
+      wait_for: host={{ item.instances.0.public_dns_name }} port=22 delay=60 timeout=320 state=started
+      with_items: '{{ ec2_out.results }}'
 
