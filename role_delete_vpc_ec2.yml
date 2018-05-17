@@ -1,0 +1,18 @@
+---
+#Terminate db and app Instances
+- name: Role Delete DB and APP Instances
+  hosts: tag_Name_DB,tag_Name_APP
+  connection: local
+  gather_facts: false
+
+  roles:
+    - aws_delete_DB_APP
+
+#Terminate LB  and VPC Network
+- name: Role Delete lb and vpc Instances
+  hosts: tag_Name_LB
+  connection: local
+  gather_facts: false
+
+  roles:
+    - aws_delete_LB_VPC
