@@ -1,0 +1,39 @@
+---
+- name: Retrieve JMeter Master public IP addresses
+  hosts: localhost
+#  hosts: tag_Perf_PERF_SLAVE
+  connection: local
+  gather_facts: true
+
+
+  tasks:
+    - name: Retrieve Slave IP addresses
+      debug: 
+        msg: "{{ hostvars[item].ec2_private_ip_address }}"
+      with_items: "{{ groups['tag_Perf_PERF_SLAVE'] }}"
+      register: output
+
+    - name: Display Output 
+      debug:
+        var: output
+
+    - name: Set Private IP variable
+      set_fact:
+        priv_ip: "{{ output.results|map(attribute='msg')|join(',') }}"
+
+    - name: Display Private IP
+      debug:
+        var: priv_ip	
+
+- name: Test View of passed parameter from another play
+  hosts: tag_Perf_PERF_SLAVE
+  connection: local
+  gather_facts: true
+
+  tasks:
+    - name: Display priv_ip
+      debug:
+        msg: "{{ hostvars['localhost'].priv_ip }}" 
+
+
+

@@ -1,0 +1,6 @@
+---
+# defaults file for roles/aws_jmeter_server_terminate_master_net
+
+vpc_cidr: "172.30.0.0/16"
+vpc_subnet_cidr: "172.30.1.0/24"
+

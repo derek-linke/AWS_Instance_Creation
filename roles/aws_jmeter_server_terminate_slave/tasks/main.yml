@@ -1,0 +1,13 @@
+---
+# tasks file for roles/aws_jmeter_server_terminate_slave
+
+    - name: Terminate JMeter Slave Server(s)
+      ec2:
+        region: "us-east-1"
+        instance_ids: '{{ ec2_id }}'
+        state: absent
+        wait: yes
+      register: vpc
+      ignore_errors: no
+
+

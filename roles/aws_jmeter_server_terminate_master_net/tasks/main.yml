@@ -1,0 +1,66 @@
+---
+# tasks file for roles/aws_jmeter_server_terminate_master_net
+
+    - name: Terminate JMeter Master Server(s)
+      ec2:
+        region: "{{ ec2_region }}"
+        instance_ids: '{{ ec2_id }}'
+        state: absent
+        wait: yes
+      register: vpc
+      ignore_errors: no
+
+    - name: Set network facts to destroy VPC
+      set_fact:
+        n_vpc_id: "{{ ec2_vpc_id }}"
+        n_key_name: "{{ ec2_key_name }}"
+
+    - name: Terminate route table
+      ec2_vpc_route_table:
+        vpc_id: "{{ n_vpc_id }}"
+        region: "{{ ec2_region }}"
+        tags:
+          Name: "J_ROUTE"
+        state: absent
+
+    - name: terminate subnet
+      ec2_vpc_subnet:
+        vpc_id: "{{ n_vpc_id }}"
+        region: "{{ ec2_region }}"
+        cidr: "{{ vpc_subnet_cidr }}"
+        tags:
+          Name: "J_SUBNET"
+        state: absent
+
+    - name: Terminate gateway
+      ec2_vpc_igw:
+        vpc_id: "{{ n_vpc_id }}"
+        region: "{{ ec2_region }}"
+        tags:
+          Name: "J_IGW"
+        state: absent
+
+    - name: "Delete group ids"
+      ec2_group:
+        name: "JMeter_default_Grp"
+        region: "{{ ec2_region }}"
+        state: absent
+
+    - name: "Delete group ids"
+      ec2_group:
+        name: "JMeter_Security_Grp"
+        region: "{{ ec2_region }}"
+        state: absent
+
+    - name: Terminate VPC
+      ec2_vpc_net:
+        name: "JMeter_VPC"
+        region: "{{ ec2_region }}"
+        cidr_block: "{{ vpc_cidr }}"
+        state: absent
+
+    - name: Delete EC2 Key
+      ec2_key:
+        name: "{{ n_key_name }}"
+        region: "{{ ec2_region }}"
+        state: absent

@@ -1,0 +1,18 @@
+---
+#Terminate Slave Instances
+- name: Role Delete Slave Instances
+  hosts: tag_Perf_PERF_SLAVE
+  connection: local
+  gather_facts: false
+
+  roles:
+    - aws_jmeter_server_terminate_slave
+
+#Terminate Master Instances and VPC Network
+- name: Role Delete Slave Instances
+  hosts: tag_Perf_PERF_JMASTER
+  connection: local
+  gather_facts: false
+
+  roles:
+    - aws_jmeter_server_terminate_master_net

@@ -1,0 +1,182 @@
+---
+- name: Create security setting
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Create VPC
+      ec2_vpc_net:
+        name:             "JMeter_VPC"
+        cidr_block:       "172.30.0.0/16"
+        region:           "us-east-1"
+        state:            "present"
+      register: my_vpc
+
+    - name: Set VPC ID in variable
+      set_fact:
+        vpc_id:           "{{ my_vpc.vpc.id }}"
+
+    - name: Create Public Subnet
+      ec2_vpc_subnet:
+        state:            "present"
+        vpc_id:           "{{ vpc_id }}"
+        cidr:             "172.30.1.0/24"
+        az:               "us-east-1a"
+        region:           "us-east-1"
+        resource_tags:
+          Name:           "J_SUBNET"
+      register: my_public_subnet
+
+    - name: Set Public Subnet ID in variable
+      set_fact:
+        public_subnet_id: "{{ my_public_subnet.subnet.id }}"
+
+    - name: Create Internet Gateway for VPC
+      ec2_vpc_igw:
+        vpc_id:           "{{ vpc_id }}"
+        region:           "us-east-1"
+        tags:
+          Name: "J_IGW"
+        state:            "present"
+      register: my_vpc_igw
+
+    - name: Set Internet Gateway ID in variable
+      set_fact:
+        igw_id: "{{ my_vpc_igw.gateway_id }}"
+
+    - name: Set up public subnet route table
+      ec2_vpc_route_table:
+        vpc_id:           "{{ vpc_id }}"
+        region:           "us-east-1"
+        tags:
+          Name:           "J_ROUTE"
+        subnets:
+          - "{{ public_subnet_id }}"
+        routes:
+          - dest:         "0.0.0.0/0"
+            gateway_id:   "{{ igw_id }}"
+
+- name: Create security setting
+  hosts: localhost
+  connection: local
+  gather_facts: false  
+ 
+  tasks:
+    - name: Add EC2 key
+      ec2_key:
+        name: J_KEY
+        key_material: 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAtkhmW+6HreMQVNl1oRa9kdNpR6tuJsX8i7/61Ru8U09iQg/GAPOfXpguTEHOjO4xqFY9NK3EvcjTW1Vl0c50NzkTqLFHuAzrYi+Ls4oaGMUH3DUvW2nUj85FuIoLEHMJaZGhl9oyz0xcKi4e1qoRMOW6FmAeUCLCUrgZ46xIxNs= DerekLinke@LTP-LINKE'
+        region: "us-east-1"        
+        state: present
+
+    - name: Setup security/firewall settings
+      ec2_group:
+        name: JMeter_Security_Grp
+        description: Rules allowing traffic on port 22 for SSH connection
+        vpc_id: "{{ vpc_id }}"         
+        region: "us-east-1"
+        rules:
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 0.0.0.0/0
+        rules_egress:
+          - proto: all
+            cidr_ip: 0.0.0.0/0          
+        tags:
+          Sec: "JMeter_Sec_Grp"
+
+    - name: Setup security/firewall settings
+      ec2_group:        
+        name: JMeter_default_Grp
+        description: Rules allowing VPC traffic
+        vpc_id: "{{ vpc_id }}"
+        region: "us-east-1"
+        rules:
+          - proto: all
+            from_port: -1
+            to_port: -1
+            cidr_ip: 0.0.0.0/0
+        rules_egress:
+          - proto: all
+            cidr_ip: 0.0.0.0/0
+        tags:
+          Sec: "JMeter_Sec_Grp"
+
+- name: Create JMeter Master server
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    master_tag: PERF_JMASTER
+    jm_private_ips:
+      - 172.30.1.100
+
+
+  tasks:  
+    - name: Create AWS Master VPC
+      ec2:
+#        count: 1
+        vpc_subnet_id: "{{ public_subnet_id }}"
+        private_ip: "{{ item }}"
+        region: "us-east-1"
+        instance_type: t2.micro
+        image: ami-2757f631
+        assign_public_ip: yes
+        key_name: J_KEY
+        group: JMeter_Security_Grp,JMeter_default_Grp
+        instance_tags:
+          Name: "{{ master_tag }}"
+          Perf: "{{ master_tag }}"
+        state: present
+        wait: yes
+      with_items: '{{ jm_private_ips }}'
+      register: ec2_out
+
+    - name: Display output
+      debug: 
+        var: ec2_out.results.item
+
+    - name: Display item output
+      debug:
+        msg: "{{ item.instances.0.public_dns_name }}"
+      with_items: "{{ ec2_out.results }}"
+
+    - name: Wait for SSH to come up
+      wait_for: host={{ item.instances.0.public_dns_name }} port=22 delay=60 timeout=320 state=started
+      with_items: '{{ ec2_out.results }}'
+
+- name: Create JMeter Slave server
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    master_tag: PERF_SLAVE
+    js_private_ips:
+      - 172.30.1.101
+      - 172.30.1.102
+
+  tasks:
+    - name: Create AWS Slave VPC
+      ec2:
+#        count: 2
+        vpc_subnet_id: "{{ public_subnet_id }}"
+        private_ip: "{{ item }}"
+        region: "us-east-1"
+        instance_type: t2.micro
+        image: ami-2757f631
+        assign_public_ip: yes
+        key_name: J_KEY
+        group: JMeter_Security_Grp,JMeter_default_Grp
+        instance_tags:
+          Name: "{{ master_tag }}"
+          Perf: "{{ master_tag }}"
+        state: present
+        wait: yes
+      with_items: '{{ js_private_ips }}'
+      register: ec2_out
+
+    - name: Wait for SSH to come up
+      wait_for: host={{ item.instances.0.public_dns_name }} port=22 delay=60 timeout=320 state=started
+      with_items: '{{ ec2_out.results }}'

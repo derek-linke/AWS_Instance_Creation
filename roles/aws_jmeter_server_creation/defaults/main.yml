@@ -1,0 +1,32 @@
+---
+# defaults file for aws_jmeter_server_creation
+
+# Master Instance Variables
+master_tag: PERF_JMASTER
+jm_private_ips:
+  - 172.30.1.103
+jm_instance_type: t2.micro
+jm_image: ami-2757f631
+
+slave_tag: PERF_SLAVE
+js_private_ips:
+  - 172.30.1.104
+  - 172.30.1.105
+js_instance_type: t2.micro
+js_image: ami-2757f631
+
+
+# Network Variables
+vpc_name: "JMeter_VPC"
+vpc_cidr_block: "172.30.0.0/16"
+vpc_subnet_cidr: "172.30.1.0/24"
+aws_region: "us-east-1"
+aws_zone: "a"
+
+
+# Public key variable
+public_key: 'ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAIEAtkhmW+6HreMQVNl1oRa9kdNpR6tuJsX8i7/61Ru8U09iQg/GAPOfXpguTEHOjO4xqFY9NK3EvcjTW1Vl0c50NzkTqLFHuAzrYi+Ls4oaGMUH3DUvW2nUj85FuIoLEHMJaZGhl9oyz0xcKi4e1qoRMOW6FmAeUCLCUrgZ46xIxNs= DerekLinke@LTP-LINKE'
+
+
+# Security variables
+ssh_allowed_source_ip: 0.0.0.0/0 

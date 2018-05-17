@@ -1,0 +1,8 @@
+---
+- name: Role Delete Slave Instances
+  hosts: tag_Perf_PERF_SLAVE
+  connection: local
+  gather_facts: false
+
+  roles:
+    - aws_jmeter_server_terminate_slave

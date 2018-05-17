@@ -1,0 +1,45 @@
+---
+- name: Configure Slave String of Private IP Addresses
+  hosts: tag_Perf_PERF_SLAVE
+  connection: local
+  vars:
+    jslave_priv_ips: ""
+
+  tasks:
+
+    - name: debug hosts
+      debug:
+        var: "{{ ec2_private_ip_address }}"
+#      with_items: "{{ groups['tag_Perf_PERF_SLAVE'] }}"
+
+    - name: Build private IP string
+      set_fact:
+        priv_ip: "{{ ec2_private_ip_address }}"
+      register: priv_ip_list
+
+
+
+    - name: Dump Private IP list
+      debug:
+        var: priv_ip_list
+
+    - name: Create string
+      set_fact:
+        priv_ip_strg: "{{ priv_ip_list.ansible_facts.priv_ip }}"
+
+    - name: Print String
+      debug:
+        var: priv_ip_strg
+
+
+    - name: Add host
+      add_host:
+        name: "{{ ec2_private_ip_address }}"
+      groups: server_list
+
+
+    - name: debug
+      debug:
+        var: "{{ groups['server_list'] }}"
+     
+

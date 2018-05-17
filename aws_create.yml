@@ -1,0 +1,22 @@
+---
+- name: Create security setting
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  tasks:
+    - name: Create VPC
+      ec2_vpc_net:
+        name:             "JMeter_VPC"
+        cidr_block:       "172.30.0.0/16"
+        region:           "us-east-1"
+        state:            "present"
+        tags:
+          Resource: JMeter
+      register: my_vpc
+
+    - name: Set VPC ID in variable
+      set_fact:
+        vpc_id:           "{{ my_vpc.vpc.id }}"
+
+

@@ -1,0 +1,8 @@
+---
+- name: Role Creat JMeter AWS Servers
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  roles:
+    - aws_jmeter_server_creation
