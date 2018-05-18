@@ -2,14 +2,14 @@
 # defaults file for aws_jmeter_server_creation
 
 # Master Instance Variables
-LB_tag: LB
+LB_tag: LB_DRL
 jm_private_ips:
   - 172.30.1.103
 jm_instance_type: t2.micro
 jm_image: ami-2757f631
 
 
-APP_tag: APP
+APP_tag: APP_DRL
 js_private_ips:
   - 172.30.1.104
   - 172.30.1.105
@@ -18,7 +18,7 @@ js_instance_type: t2.micro
 js_image: ami-2757f631
 
 
-DB_tag: DB
+DB_tag: DB_DRL
 db_private_ips:
   - 172.30.1.110
 
