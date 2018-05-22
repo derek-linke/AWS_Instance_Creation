@@ -9,6 +9,10 @@
       delay: 10
       retries: 3  
 
+    - name: Wait 5 seconds
+      pause:
+        seconds: 5
+        
     - name: VPC Status
       debug:
         msg: "{{ my_vpc.vpc.state }}"
@@ -32,6 +36,10 @@
           Name:           "J_SUBNET"
       register: my_public_subnet
 
+    - name: Wait 5 seconds
+      pause:
+        seconds: 5
+        
     - name: Subnet Dump
       debug:
         msg: my_public_subnet
@@ -49,6 +57,10 @@
         state:            "present"
       register: my_vpc_igw
 
+    - name: Wait 5 seconds
+      pause:
+        seconds: 5
+        
     - name: IGW dump
       debug:
         var: my_vpc_igw
@@ -69,6 +81,10 @@
           - dest:         "0.0.0.0/0"
             gateway_id:   "{{ igw_id }}"
 
+    - name: Wait 5 seconds
+      pause:
+        seconds: 5
+        
     - name: Add EC2 key
       ec2_key:
         name: J_KEY
@@ -76,6 +92,10 @@
         region: "{{ aws_region }}"        
         state: present
 
+    - name: Wait 5 seconds
+      pause:
+        seconds: 5
+        
     - name: Setup security/firewall settings::SSH
       ec2_group:
         name: JMeter_Security_Grp
@@ -93,6 +113,10 @@
         tags:
           Sec: "PrivSack_Sec_Grp"
 
+    - name: Wait 5 seconds
+      pause:
+        seconds: 5
+        
     - name: Setup security/firewall settings::default
       ec2_group:        
         name: JMeter_default_Grp
@@ -109,6 +133,7 @@
             cidr_ip: 0.0.0.0/0
         tags:
           Sec: "PrivStack_Sec_Grp"
+
 
     - name: Create AWS LB Servers
       ec2:
