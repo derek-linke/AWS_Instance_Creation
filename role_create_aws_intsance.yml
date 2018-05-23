@@ -5,4 +5,4 @@
   gather_facts: false
 
   roles:
-    - { role: aws_instance_creation, jm_image: "{{survey_jm_image}}" }
+    - { role: aws_instance_creation, jm_image: "{{survey_jm_image}}", js_image: "{{survey_js_image}}",db_image: "{{survey_db_image}}" }
